@@ -34,19 +34,10 @@ const char* ESPTAGS[] =
     " CONNECT\r\n"
 };
 
-typedef enum
-{
-	TAG_OK,
-	TAG_ERROR,
-	TAG_FAIL,
-	TAG_SENDOK,
-	TAG_CONNECT
-} TagsEnum;
-
 
 Stream *EspDrv::espSerial;
 
-RingBuffer EspDrv::ringBuf(32);
+RingBuffer EspDrv::ringBuf(128);
 
 // Array of data to cache the information related to the networks discovered
 char 	EspDrv::_networkSsid[][WL_SSID_MAX_LENGTH] = {{"1"},{"2"},{"3"},{"4"},{"5"}};
@@ -75,7 +66,7 @@ void EspDrv::wifiDriverInit(Stream *espSerial)
 
 	bool initOK = false;
 	
-	for(int i=0; i<5; i++)
+	for(int i = 0; i < 5; i++)
 	{
 		if (sendCmd(F("AT")) == TAG_OK)
 		{
@@ -98,11 +89,11 @@ void EspDrv::wifiDriverInit(Stream *espSerial)
 	getFwVersion();
 
 	// prints a warning message if the firmware is not 1.X or 2.X
-	if ((fwVersion[0] != '1' and fwVersion[0] != '2') or
+	if ((fwVersion[0] != '3' and fwVersion[0] != '2') or
 		fwVersion[1] != '.')
 	{
 		LOGWARN1(F("Warning: Unsupported firmware"), fwVersion);
-		delay(4000);
+		delay(2000);
 	}
 	else
 	{
@@ -116,12 +107,12 @@ void EspDrv::reset()
 	LOGDEBUG(F("> reset"));
 
 	sendCmd(F("AT+RST"));
-	delay(3000);
+	delay(2000);
 	espEmptyBuf(false);  // empty dirty characters from the buffer
 
 	// disable echo of commands
 	sendCmd(F("ATE0"));
-
+ 
 	// set station mode
 	sendCmd(F("AT+CWMODE=1"));
 	delay(200);
@@ -917,16 +908,15 @@ bool EspDrv::sendCmdGet(const __FlashStringHelper* cmd, const char* startTag, co
 {
     int idx;
 	bool ret = false;
-
 	outStr[0] = 0;
-
 	espEmptyBuf();
-
 	LOGDEBUG(F("----------------------------------------------"));
-	LOGDEBUG1(F(">>"), cmd);
 
 	// send AT command to ESP
-	espSerial->println(cmd);
+	if (cmd != NULL) {
+        LOGDEBUG1(F(">>"), cmd);
+	    espSerial->println(cmd);
+    }
 
 	// read result until the startTag is found
 	idx = readUntil(1000, startTag);
@@ -1053,6 +1043,7 @@ int EspDrv::readUntil(unsigned int timeout, const char* tag, bool findTags)
         if(espSerial->available())
 		{
             c = (char)espSerial->read();
+            // Serial.println(c);
 			LOGDEBUG0(c);
 			ringBuf.push(c);
 

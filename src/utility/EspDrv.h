@@ -21,10 +21,16 @@ along with The Arduino WiFiEsp library.  If not, see
 
 #include "Stream.h"
 #include "IPAddress.h"
-
-
 #include "RingBuffer.h"
 
+typedef enum
+{
+	TAG_OK,
+	TAG_ERROR,
+	TAG_FAIL,
+	TAG_SENDOK,
+	TAG_CONNECT
+} TagsEnum;
 
 
 // Maximum size of a SSID
@@ -330,6 +336,7 @@ private:
 
 
 	friend class WiFiEsp;
+    friend class WiFiEspMqtt;
 	friend class WiFiEspServer;
 	friend class WiFiEspClient;
 	friend class WiFiEspUdp;

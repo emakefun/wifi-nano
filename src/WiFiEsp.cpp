@@ -37,8 +37,6 @@ void WiFiEspClass::init(Stream* espSerial)
 	EspDrv::wifiDriverInit(espSerial);
 }
 
-
-
 char* WiFiEspClass::firmwareVersion()
 {
 	return EspDrv::getFwVersion();
